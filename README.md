@@ -1,6 +1,6 @@
 # All-In-One Network Utility
 AIONet was built as a multipurpose tool to replace netcat. Written in Python3, AIONet offers features like reverse shell spawning, file upload and file download.
-This tool was written as a replacement for (netutil)[https://github.com/aarole/netutil].
+This tool was written as a replacement for (netutil)[https://github.com/aarole/netutil]. A detailed explanation of the differences between the two can be found at the end of this document.
 
 ## Dependencies
 * Python 3
@@ -28,3 +28,5 @@ Options:
 -l, --listen               Create a listener on the port defined using -p
 -h, --help                 show this help message and exit
 ```
+
+## Updates

@@ -46,13 +46,14 @@ class Server:
 
 
 	def download_file(self, command, content):
-		path = command.split(" ")[1]
+		path = str(command).split(" ")[1].rstrip()
 		try:
 			with open(path,"wb") as dl_file:
 				dl_file.write(base64.b64decode(content))
+				dl_file.close()
 			return f"Downloaded {path}"
-		except:
-			return "Download failed"
+		except Exception as e:
+			return f"Download failed: {str(e)}"
 
 	
 	def upload_file(self, command):
@@ -95,9 +96,20 @@ class Client:
 
 	def move_fs(self, command):
 		new_dir = command.split(" ")[1]
-		os.chdir(new_dir)
-		new_dir_name = self.exec_command("pwd")
-		return f"Changed directory to {new_dir} ({str(new_dir_name).rstrip()})"
+		try:
+			os.chdir(new_dir)
+			return f"Changed directory to {new_dir}"
+		except Exception as e:
+			return f"Error changing directory: {str(e)}"
+
+
+	def remove_file(self, command):
+		to_remove = command.split(" ")[1]
+		try:
+			os.remove(to_remove)
+			return f"Removed {to_remove}"
+		except Exception as e:
+			return f"Error removing file: {str(e)}"
 
 	
 	def run(self):
@@ -117,6 +129,8 @@ class Client:
 					result = self.read_file(command)
 				elif command.count("upload") > 0:
 					result = self.write_file(command)
+				elif command.count("rm") > 0:
+					result = self.remove_file(command)
 				else:
 					result = self.exec_command(command)
 			except Exception as e:
@@ -129,7 +143,7 @@ class Client:
 
 
 	def read_file(self, command):
-		path = command.split(" ")[1]
+		path = str(command).split(" ")[1].rstrip()
 		with open(path, "rb") as in_file:
 			return base64.b64encode(in_file.read())
 
@@ -141,13 +155,15 @@ class Client:
 		try:
 			with open(path,"wb") as out_file:
 				out_file.write(base64.b64decode(content))
+				out_file.close()
 			return f"Uploaded {path}"
 		except:
 			return "Upload failed"
 
 
 def define_args():
-	parser = argparse.ArgumentParser(description="All-In-One Network Utility by Aditya Arole (@e1ora)",usage="\nOn host: python3 aionet.py -p PORT -l\nOn remote machine: python3 aionet.py -t TARGET -p PORT")
+	usage_str = "\nOn host: python3 aionet.py -p PORT -l\nOn remote machine: python3 aionet.py -t TARGET -p PORT"
+	parser = argparse.ArgumentParser(description="All-In-One Network Utility by Aditya Arole (@e1ora)",usage=usage_str)
 	parser.add_argument("-t","--target",dest="target",type=str,metavar="target",help="IP address of the remote listener")
 	parser.add_argument("-p","--port",dest="port",type=int,metavar="port",help="If used with -l, port where listener is to be created; else, port where remote listener exists")
 	parser.add_argument("-l","--listen",dest="listen",action="store_true",help="Create a listener on the port defined using -p")
