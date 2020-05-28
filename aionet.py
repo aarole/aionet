@@ -4,6 +4,7 @@ import threading
 import subprocess
 import os
 import sys
+import base64
 
 
 class Server:
@@ -41,7 +42,7 @@ class Server:
 		path = command.split[" "][1]
 		try:
 			with open(path,"wb") as dl_file:
-				dl_file.write(content)
+				dl_file.write(base64.b64decode(content))
 			return f"Downloaded {path}"
 		except:
 			return "Download failed"
@@ -110,7 +111,7 @@ class Client:
 	def read_file(self, command):
 		path = command.split(" ")[1]
 		with open(path, "rb") as in_file:
-			return in_file.read()
+			return base64.b64encode(in_file.read())
 
 
 def define_args():
@@ -120,6 +121,10 @@ def define_args():
 	parser.add_argument("-l","--listen",dest="listen",action="store_true",help="Create a listener on the port defined using -p")
 	parser.set_defaults(listen=False)
 
+	if not len(sys.argv) > 1:
+		parser.print_help()
+		exit()
+	
 	return parser.parse_args(sys.argv[1:])
 
 
