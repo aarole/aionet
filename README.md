@@ -40,7 +40,12 @@ Options:
   * Used the base64 library for encoding files during upload/download
 * Used the os library to allow for usage of cd and rm commands
 
+## TODO
+* Add error-checking during file upload/download with hashing
+* Add support for more fs-manipulating commands (eg: touch)
+
 ## Known issues
 * File download
-  * Non-text files (png, jpg, pdf) cause errors when downloading them
-  * Files are partially downloaded and a part of the base64 encoded file is printed
+  * ~~Non-text files (png, jpg, pdf) cause errors when downloading them~~
+  * ~~Files are partially downloaded and a part of the base64 encoded file is printed~~
+  * Fix: Switched from length-based recv to sentinel-based recv
