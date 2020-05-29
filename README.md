@@ -32,6 +32,9 @@ Options:
 ## Updates
 * Program structure overhauled to allow for easy extension
   * Created individual classes for the server (listener/host) and the client (target/remote machine)
+* Updated program to use reverse backdoors
+  * Listener is created on the physical machine and remote target connects to it
+  * Opening a port on the host ensures that firewalls on the remote target do not raise red flags
 * Replaced getopt with argparse
 * Moved file manipulation (download and upload) to post-shell operations
   * Used the base64 library for encoding files during upload/download
