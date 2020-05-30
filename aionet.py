@@ -20,9 +20,9 @@ class Server:
 		print(f"Listening on {self.host}:{self.port}")
 
 		while True:
-			self.connection, address = listener.accept()
+			self.connection, self.address = listener.accept()
 			print()
-			print(f"Received connection from {address}")
+			print(f"Received connection from {self.address}")
 			ct = threading.Thread(target=self.handle, args=())
 			ct.start()
 	
@@ -37,6 +37,12 @@ class Server:
 			else:
 				command += "\n"
 
+			if command == "exit\n":
+				print(f"Closing connection to {self.address[0]}")
+				self.connection.send(bytes(command, "utf-8"))
+				print("Connection closed")
+				sys.exit(0)
+
 			response = self.rce(command)
 
 			if type(command) is not bytes:
@@ -46,15 +52,24 @@ class Server:
 			print(response)
 
 
-	def download_file(self, command, content):
+	def download_file(self, command, response):
 		path = str(command).split(" ")[1].rstrip()
+		response = response.split(" ")
+		received = response[0].strip()
+		content = response[1].strip()
 		try:
 			with open(path,"wb") as dl_file:
-				dl_file.write(base64.b64decode(content))
-				dl_file.close()
-			return f"Downloaded {path}"
+				dec_content = base64.b64decode(content)
+				local = hashlib.sha256(dec_content).hexdigest()
+				if received == local:
+					dl_file.write(dec_content)
+					dl_file.close()
+					return f"Downloaded {path}\nSHA256 hash verified:\nReceived: {received}\nLocal:    {local}\n"
+				else:
+					raise Exception("Hash verification failed.")
 		except Exception as e:
-			return f"Download failed: {str(e)}"
+			os.remove(path)
+			return f"Download failed: {str(e)}\n"
 
 	
 	def upload_file(self, command):
@@ -74,16 +89,11 @@ class Server:
 			command = bytes(command, "utf-8")
 		self.connection.send(command)
 
-		if command == "exit\n":
-			self.connection.close()
-			print("Exiting")
-			sys.exit(0)
-
 		response = "\n"
 		while response[-1] != "\x00":
 			data = self.connection.recv(4096)
 			response += data.decode("utf-8")
-		response.lstrip()
+		response.strip()
 
 		return response
 
@@ -164,9 +174,13 @@ class Client:
 		path = str(command).split(" ")[1].rstrip()
 		with open(path, "rb") as in_file:
 			content = in_file.read()
+			content_hash = hashlib.sha256(content).hexdigest()
 			if type(content) is not bytes:
 				content = bytes(content, "utf-8")
-			return base64.b64encode(content)
+			if type(content_hash) is not bytes:
+				content_hash = bytes(content_hash, "utf-8")
+			combined = content_hash + b" " + base64.b64encode(content)
+			return combined
 
 
 	def write_file(self, command):
@@ -181,10 +195,11 @@ class Client:
 				if chash == whash:
 					out_file.write(dec_content)
 					out_file.close()
-					return f"Uploaded {path}\nSHA256 hash verified:\nReceived: {chash}\nLocal: {whash}\n"
+					return f"Uploaded {path}\nSHA256 hash verified:\nReceived: {chash}\nLocal:    {whash}\n"
 				else:
 					raise Exception("Hash verification failed.")
 		except Exception as e:
+			os.remove(path)
 			return f"Upload failed: {str(e)}\n"
 
 
@@ -196,8 +211,6 @@ def define_args():
 	parser.add_argument("-t","--target",dest="target",type=str,metavar="target",help="IP address of the remote listener")
 	parser.add_argument("-p","--port",dest="port",type=int,metavar="port",help="If used with -l, port where listener is to be created; else, port where remote listener exists")
 	parser.add_argument("-l","--listen",dest="listen",action="store_true",help="Create a listener on the port defined using -p")
-	# parser.add_argument("-s","--scan",dest="scan",action="store_true",help="Port scan a specified target")
-	# parser.add_argument("-r","--range",dest="range",type=str,metavar="port_range",help="Port range to scan (eg: 1-1000)")
 	parser.set_defaults(listen=False)
 
 	if not len(sys.argv) > 1:
