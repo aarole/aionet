@@ -48,5 +48,5 @@ Options:
   * ~~Non-text files (png, jpg, pdf) cause errors when downloading them~~
   * ~~Files are partially downloaded and a part of the base64 encoded file is printed~~
   * Fix: Switched from length-based recv to sentinel-based recv
-* Exit condition on the listener
-  * Program does not exit properly on the server
+* Exit condition
+  * exit command is not handled properly on the server

