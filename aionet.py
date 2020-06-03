@@ -241,8 +241,7 @@ class Client:
 
 
 def define_args():
-	usage_str = """- Reverse shell spawning
-	On host: python3 aionet.py -p PORT -l
+	usage_str = """On host: python3 aionet.py -p PORT -l
 	On remote machine: python3 aionet.py -t TARGET -p PORT"""
 	parser = argparse.ArgumentParser(description="All-In-One Network Utility by Aditya Arole (@e1ora)",usage=usage_str)
 	parser.add_argument("-t","--target",dest="target",type=str,metavar="target",help="IP address of the remote listener")
