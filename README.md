@@ -1,5 +1,6 @@
 # All-In-One Network Utility
-AIONet was built as a multipurpose tool to replace netcat. Written in Python3, AIONet offers features like reverse shell spawning, file upload and file download.  The idea for this tool was obtained from chapter 2 of Black Hat Python by Justin Seitz. This program aims to update BHP's tool to provide features like class-based structure, Python3 support and error checking. A detailed explanation of the differences between the two can be found at the end of this document.
+AIONet was built as a multipurpose tool to replace netcat. Written in Python3, AIONet offers features like reverse shell spawning, file upload and file download.  
+The idea for this tool was obtained from chapter 2 of Black Hat Python by Justin Seitz. This program aims to update BHP's tool to provide features like class-based structure, Python3 support and error checking. A detailed explanation of the differences between the two can be found at the end of this document.
 
 ## Dependencies
 * Python 3
@@ -36,9 +37,13 @@ Options:
   * Opening a port on the host ensures that firewalls on the remote target do not raise red flags
 * Replaced getopt with argparse
 * Moved file manipulation (download and upload) to post-shell operations
-  * Used the base64 library for encoding files during upload/download
+  * Used the base64 library to encode files during upload/download
+  * Base64 encoding allows for easy transfer of files (especially non-text [pdf, png, jpg] files)
 * Used the os library to allow for usage of cd and rm commands
-* Added error-checking during file upload/download with hashing
+* Added error-checking during file upload/download using SHA256 hashes (provided by hashlib)
+  * Hash is sent from the source computer along with the message
+  * The destination hashes the file locally
+  * If the hashes match, the file is downloaded/uploaded; else, the file is deleted
 
 ## TODO
 * Add support for more fs-manipulating commands (eg: touch)
