@@ -325,6 +325,9 @@ def define_args():
 
 # Define the driver method for the program
 def main():
+	if float(''.join(sys.version.split(' ')[0].split('.')[0:2]))/10 < 3.6:
+		print("Error: Python version >=3.6 required.")
+		sys.exit(0)
 	# Get the arguments with the define_args method
 	args = define_args()
 
