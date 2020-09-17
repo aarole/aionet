@@ -1,4 +1,4 @@
-FROM python:3.5.10-buster
+FROM python:latest
 
 ENV PYTHONDONTWRITEBYTECODE 1
 

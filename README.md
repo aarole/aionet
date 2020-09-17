@@ -3,19 +3,49 @@ AIONet was built as a multipurpose tool to replace netcat. Written in Python3, A
 The idea for this tool was obtained from chapter 2 of Black Hat Python by Justin Seitz. This program aims to update BHP's tool to provide features like class-based structure, Python3 support and error checking. A detailed explanation of the differences between the two can be found at the end of this document.
 
 ## Dependencies
-* Python 3
+* Python 3 (>=3.6)
 
 ## Download
-### Option 1: Using git clone
+### Option 1: Using `git clone`
 ```
 git clone https://github.com/aarole/aionet.git
 cd aionet/
 ```
 
-### Option 2: Using wget
+### Option 2: Using `wget`
 ```
 wget -O aionet.py https://raw.githubusercontent.com/aarole/aionet/master/aionet.py
 ```
+
+### Option 3: Using `pip`
+```
+python3 -m pip install --upgrade aionet
+```
+
+### Option 4: Using Docker
+#### Getting the image
+##### 4.1.1: Using Docker Hub
+```
+docker pull e1ora/aionet
+```
+
+##### 4.1.2: Building the image using the repository's Dockerfile
+```
+git clone https://github.com/aarole/aionet.git
+cd aionet/
+docker build -t e1ora/aionet .
+```
+
+#### 4.2: Running the container
+```
+docker run --rm -it -v /path/to/some/directory:/opt -p PORT:PORT aionet -l -p PORT
+```
+* /path/to/some/directory
+  * Directory (a) containing the files you may want to upload, or (b) to which you may want to download files
+  * Directory path should be on your Docker host
+* PORT
+  * Port on which the listener will listen
+  * Use the same port in all three locations
 
 ## Usage
 ```
@@ -46,7 +76,7 @@ Options:
   * If the hashes match, the file is downloaded/uploaded; else, the file is deleted
 
 ## TODO
-* Add support for more fs-manipulating commands (eg: touch)
+* Implement logging
 
 ## Known issues
 * File download
@@ -54,4 +84,5 @@ Options:
   * ~~Files are partially downloaded and a part of the base64 encoded file is printed~~
   * Fix: Switched from length-based recv to sentinel-based recv
 * Exit condition
-  * exit command is not handled properly on the server
+  * ~~exit command is not handled properly on the server~~
+  * Fix: Moved handle() call in Server class to outside the while loop

