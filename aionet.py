@@ -137,7 +137,7 @@ class Server:
 				# Return hash and base64 encoded contents
 				return base64.b64encode(content), content_hash
 		except FileNotFoundError:
-			raise Exception(f"{path} does not exist in {self.base_dir}\n")
+			raise Exception(f"{path} does not exist in the directory where AIONet was started ({self.base_dir})\n")
 	
 	
 	# Define method to executre commands remotely

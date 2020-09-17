@@ -3,7 +3,7 @@ AIONet was built as a multipurpose tool to replace netcat. Written in Python3, A
 The idea for this tool was obtained from chapter 2 of Black Hat Python by Justin Seitz. This program aims to update BHP's tool to provide features like class-based structure, Python3 support and error checking. A detailed explanation of the differences between the two can be found at the end of this document.
 
 ## Dependencies
-* Python 3 (>=3.6)
+* Python3 (>=3.6)
 
 ## Download
 ### Option 1: Using `git clone`
@@ -17,26 +17,23 @@ cd aionet/
 wget -O aionet.py https://raw.githubusercontent.com/aarole/aionet/master/aionet.py
 ```
 
-### Option 3: Using `pip`
-```
-python3 -m pip install --upgrade aionet
-```
+### Option 3: Using Docker
+An AIONet listener can be created by using an existing Docker image or by building your own.  
 
-### Option 4: Using Docker
-#### Getting the image
-##### 4.1.1: Using Docker Hub
+#### 3.1: Getting the image
+##### 3.1.1: Using Docker Hub
 ```
 docker pull e1ora/aionet
 ```
 
-##### 4.1.2: Building the image using the repository's Dockerfile
+##### 3.1.2: Building the image using the repository's Dockerfile
 ```
 git clone https://github.com/aarole/aionet.git
 cd aionet/
 docker build -t e1ora/aionet .
 ```
 
-#### 4.2: Running the container
+#### 3.2: Running the container
 ```
 docker run --rm -it -v /path/to/some/directory:/opt -p PORT:PORT aionet -l -p PORT
 ```
