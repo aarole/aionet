@@ -23,19 +23,19 @@ An AIONet listener can be created by using an existing Docker image or by buildi
 #### 3.1: Getting the image
 ##### 3.1.1: Using Docker Hub
 ```
-docker pull e1ora/aionet
+docker pull aarole/aionet
 ```
 
 ##### 3.1.2: Building the image using the repository's Dockerfile
 ```
 git clone https://github.com/aarole/aionet.git
 cd aionet/
-docker build -t e1ora/aionet .
+docker build -t aarole/aionet .
 ```
 
 #### 3.2: Running the container
 ```
-docker run --rm -it -v /path/to/some/directory:/opt -p PORT:PORT aionet -l -p PORT
+docker run --rm -it -v /path/to/some/directory:/opt -p PORT:PORT aarole/aionet -l -p PORT
 ```
 * /path/to/some/directory
   * Directory (a) containing the files you may want to upload, or (b) to which you may want to download files
