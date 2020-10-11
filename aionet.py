@@ -17,6 +17,7 @@
 # Import required libraries
 import argparse
 import base64
+from datetime import datetime
 import hashlib
 import os
 import socket
@@ -48,6 +49,19 @@ class Server:
 			print()
 			print(f"Received connection from {self.address}")
 			break
+		
+		ts = datetime.now()
+		foo = ts.strftime("%Y%m%d")+"_"+ts.strftime("%H-%M-%S")
+		bar = ts.strftime("%B %d, %Y")
+		
+		self.log_file = open(f"{self.base_dir}/{self.address[0]}_{foo}.log", "w")
+		self.log_file.write("AIONet log file\n")
+		self.log_file.write("https://github.com/aarole/aionet\n\n")
+		self.log_file.write(f"Remote Host: {self.address[0]}\n")
+		self.log_file.write(f"Remote Port: {self.address[1]}\n")
+		self.log_file.write(f"Date: {bar}\n")
+		self.log_file.write("------------------------------------------------\n")
+		
 		# Start a thread to handle the connection
 		ct = threading.Thread(target=self.handle, args=())
 		ct.start()
@@ -72,13 +86,16 @@ class Server:
 					continue
 			else:
 				command += "\n"
-
+			
 			# If exit command received, inform the client and close the connection
 			if command == "exit\n":
 				print(f"Closing connection to {self.address[0]}")
 				self.connection.send(bytes(command, "utf-8"))
 				print("Connection closed")
+				self.log_file.close()
 				return
+
+			self.log_file.write(f"\nCommand:\n{command.strip()}\n\n")
 
 			# Get the response using the Remote Code Execution (RCE) function
 			response = self.rce(command)
@@ -89,7 +106,11 @@ class Server:
 					response = self.download_file(command, response)
 				
 			# Print the response received
-			print(response)
+			print(response.strip()[:-1])
+
+			self.log_file.write(f"Response:\n{response.strip()[:-1]}\n")
+			self.log_file.write("------------------------------------------------\n")
+
 
 
 	# Define function to download files from a client
