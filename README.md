@@ -71,9 +71,12 @@ Options:
   * Hash is sent from the source computer along with the message
   * The destination hashes the file locally
   * If the hashes match, the file is downloaded/uploaded; else, the file is deleted
+* Added server-side logging
+  * If the shell is dropped, all commands run and their respective output is stored in a timestamped log file
 
 ## TODO
-* Implement logging
+* Add support for bind shells
+* Add ability to establish persistence
 
 ## Known issues
 * File download
@@ -83,3 +86,6 @@ Options:
 * Exit condition
   * ~~exit command is not handled properly on the server~~
   * Fix: Moved handle() call in Server class to outside the while loop
+* Downloading files with full path
+  * ~~Supplying the absolute path to a file being downloaded could potentially cause conflict issues on the host~~
+  * Fix: Added a line to replace "/" with "_" to allow the user to download files by providing an absolute path without encountering conflict issues and maintaining the full path string in the downloaded file for their reference

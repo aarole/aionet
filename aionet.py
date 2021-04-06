@@ -112,7 +112,6 @@ class Server:
 			self.log_file.write("------------------------------------------------\n")
 
 
-
 	# Define function to download files from a client
 	def download_file(self, command, response):
 		# Get the filename from the second part of the input
@@ -122,6 +121,8 @@ class Server:
 		received = response[0].strip()
 		content = response[1].strip()
 		try:
+			# Replace / with _ in the filename to avoid overwriting files on host while maintaining full path of downloaded file
+			path = path.replace("/", "_")
 			with open(path,"wb") as dl_file:
 				# Decode the base64 content
 				dec_content = base64.b64decode(content)
