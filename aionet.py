@@ -50,11 +50,15 @@ class Server:
 			print(f"Received connection from {self.address}")
 			break
 		
+		# Find timestamp for log file name
 		ts = datetime.now()
 		foo = ts.strftime("%Y%m%d")+"_"+ts.strftime("%H-%M-%S")
 		bar = ts.strftime("%B %d, %Y")
 		
-		self.log_file = open(f"{self.base_dir}/{self.address[0]}_{foo}.log", "w")
+		# Create directory to store command and result logs
+		# Create a log file with the IP address of the remote host and the timestamp
+		os.mkdir(f"{self.base_dir}/logs")
+		self.log_file = open(f"{self.base_dir}/logs/{self.address[0]}_{foo}.log", "w")
 		self.log_file.write("AIONet log file\n")
 		self.log_file.write("https://github.com/aarole/aionet\n\n")
 		self.log_file.write(f"Remote Host: {self.address[0]}\n")
